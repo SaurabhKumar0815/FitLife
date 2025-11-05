@@ -3,6 +3,24 @@ import sqlite3
 
 app = Flask(__name__)
 
+@app.route('/dashboard-data')
+def dashboard_data():
+    conn = sqlite3.connect('fitlife.db')
+    c = conn.cursor()
+    c.execute('SELECT SUM(calories), COUNT(*) FROM users')
+    data = c.fetchone()
+    conn.close()
+
+    total_calories = data[0] if data[0] else 0
+    total_workouts = data[1]
+
+    response = {
+        "total_workouts": total_workouts,
+        "calories_burned": total_calories,
+        "current_streak": 3,
+        "weekly_workouts": [2, 3, 1, 4, 2, 5, 3]
+    }
+    return jsonify(response)
 # ===============================
 # 🔹 Step 1: Database Initialization
 # ===============================
@@ -72,3 +90,4 @@ def home():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+    

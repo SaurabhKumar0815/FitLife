@@ -76,18 +76,35 @@ function showSection(sectionId) {
     } else if (sectionId === 'running') {
         setTimeout(initMap, 100);
     }
+}if (sectionId === 'dashboard') {
+    await updateDashboard();
+    setTimeout(initCharts, 200);
 }
 
-function updateDashboard() {
-    document.getElementById('totalWorkouts').textContent = userData.workouts;
-    document.getElementById('totalCalories').textContent = userData.calories;
-    document.getElementById('currentStreak').textContent = userData.streak + ' days';
 
-    const progress = Math.min((userData.workouts / 5) * 100, 100);
-    document.getElementById('dailyProgress').style.width = progress + '%';
-    document.getElementById('dailyProgress').textContent = Math.round(progress) + '%';
+async function updateDashboard() {
+    try {
+        const response = await fetch('/dashboard-data');
+        const data = await response.json();
+
+        // Update UI with backend data
+        document.getElementById('totalWorkouts').textContent = data.total_workouts;
+        document.getElementById('totalCalories').textContent = data.calories_burned;
+        document.getElementById('currentStreak').textContent = data.current_streak + ' days';
+
+        const progress = Math.min((data.total_workouts / 5) * 100, 100);
+        document.getElementById('dailyProgress').style.width = progress + '%';
+        document.getElementById('dailyProgress').textContent = Math.round(progress) + '%';
+
+        // Update chart dynamically
+        if (progressChart) {
+            progressChart.data.datasets[0].data = data.weekly_workouts;
+            progressChart.update();
+        }
+    } catch (error) {
+      console.error("❌ Dashboard data load error:", error);
+ }
 }
-
 function calculateBMI() {
     const height = parseFloat(document.getElementById('height').value);
     const weight = parseFloat(document.getElementById('weight').value);
@@ -121,7 +138,7 @@ function calculateBMI() {
                     <p>Status: ${status}</p>
                 </div>
             `;
-            saveBMIData("User", height, weight, bmi, 0);
+    saveBMIData("User", height, weight, bmi, 0);
 
 }
 
@@ -525,14 +542,14 @@ function triggerAlarm(alarm) {
     updateAlarmList();
 
     const audio = new Audio();
-   if (alarm.sound === "beep") {
-      audio.src =
-        "https://actions.google.com/sounds/v1/alarms/beep_short.ogg";
+    if (alarm.sound === "beep") {
+        audio.src =
+            "https://actions.google.com/sounds/v1/alarms/beep_short.ogg";
     } else if (alarm.sound === "energetic") {
-      audio.src =
-        "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
+        audio.src =
+            "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
     } else if (alarm.sound === "gentle") {
-      audio.src = "https://actions.google.com/sounds/v1/alarms/wake_up.ogg";
+        audio.src = "https://actions.google.com/sounds/v1/alarms/wake_up.ogg";
     }
 
     // Play sound multiple times
@@ -563,7 +580,7 @@ function saveBMIData(name, height, weight, bmi, calories) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, height, weight, bmi, calories })
     })
-    .then(res => res.json())
-    .then(data => alert(data.message))
-    .catch(err => console.error('Error:', err));
+        .then(res => res.json())
+        .then(data => alert(data.message))
+        .catch(err => console.error('Error:', err));
 }
