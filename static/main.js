@@ -64,21 +64,19 @@ function initCharts() {
     });
 }
 
-function showSection(sectionId) {
+async function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => {
         section.style.display = 'none';
     });
+
     document.getElementById(sectionId).style.display = 'block';
 
     if (sectionId === 'dashboard') {
-        setTimeout(initCharts, 100);
-        updateDashboard();
+        await updateDashboard(); // ✅ fixed: inside async function
+        setTimeout(initCharts, 200);
     } else if (sectionId === 'running') {
         setTimeout(initMap, 100);
     }
-}if (sectionId === 'dashboard') {
-    await updateDashboard();
-    setTimeout(initCharts, 200);
 }
 
 
