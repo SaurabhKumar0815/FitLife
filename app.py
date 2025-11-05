@@ -3,26 +3,8 @@ import sqlite3
 
 app = Flask(__name__)
 
-@app.route('/dashboard-data')
-def dashboard_data():
-    conn = sqlite3.connect('fitlife.db')
-    c = conn.cursor()
-    c.execute('SELECT SUM(calories), COUNT(*) FROM users')
-    data = c.fetchone()
-    conn.close()
-
-    total_calories = data[0] if data[0] else 0
-    total_workouts = data[1]
-
-    response = {
-        "total_workouts": total_workouts,
-        "calories_burned": total_calories,
-        "current_streak": 3,
-        "weekly_workouts": [2, 3, 1, 4, 2, 5, 3]
-    }
-    return jsonify(response)
 # ===============================
-# 🔹 Step 1: Database Initialization
+# Database initialization
 # ===============================
 def init_db():
     conn = sqlite3.connect('fitlife.db')
@@ -38,16 +20,16 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 # ===============================
-# 🔹 Step 2: Routes (Pages)
+# Routes
 # ===============================
 @app.route('/')
 def home():
+    # Ye line tumhara HTML dashboard page load karega
     return render_template('index.html')
 
-# ===============================
-# 🔹 Step 3: Save Data from Frontend
-# ===============================
+
 @app.route('/save', methods=['POST'])
 def save_data():
     data = request.get_json()
@@ -66,9 +48,7 @@ def save_data():
 
     return jsonify({"message": "✅ Data saved successfully!"})
 
-# ===============================
-# 🔹 Step 4: Fetch Data (Show All Saved Users)
-# ===============================
+
 @app.route('/users', methods=['GET'])
 def get_users():
     conn = sqlite3.connect('fitlife.db')
@@ -76,18 +56,32 @@ def get_users():
     c.execute('SELECT * FROM users')
     rows = c.fetchall()
     conn.close()
-    return jsonify(rows) 
+    return jsonify(rows)
 
-import os
-from flask import Flask
 
-app = Flask(__name__)
+@app.route('/dashboard-data')
+def dashboard_data():
+    conn = sqlite3.connect('fitlife.db')
+    c = conn.cursor()
+    c.execute('SELECT SUM(calories), COUNT(*) FROM users')
+    data = c.fetchone()
+    conn.close()
 
-@app.route('/')
-def home():
-    return "FitLife App is running successfully!"
+    total_calories = data[0] if data[0] else 0
+    total_workouts = data[1]
 
+    response = {
+        "total_workouts": total_workouts,
+        "calories_burned": total_calories,
+        "current_streak": 3,
+        "weekly_workouts": [2, 3, 1, 4, 2, 5, 3]
+    }
+    return jsonify(response)
+
+
+# ===============================
+# Main Run
+# ===============================
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-    
+    init_db()
+    app.run(host='0.0.0.0', port=5000, debug=True)
