@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitLife - Smart Fitness Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+
+    </head>
+<body>
+    <nav class="navbar">
+        <div class="logo">💪 FitLife</div>
+        <ul class="nav-links">
+            <li><a href="#home" onclick="showSection('home')">Home</a></li>
+            <li><a href="#dashboard" onclick="showSection('dashboard')">Dashboard</a></li>
+            <li><a href="#running" onclick="showSection('running')">Running</a></li>
+            <li><a href="#bmi" onclick="showSection('bmi')">BMI</a></li>
+            <li><a href="#health" onclick="showSection('health')">Health Calc</a></li>
+            <li><a href="#diet" onclick="showSection('diet')">Diet Plan</a></li>
+            <li><a href="#workouts" onclick="showSection('workouts')">Workouts</a></li>
+            <li><a href="#motivation" onclick="showSection('motivation')">Motivation</a></li>
+            <li><a href="#alarm" onclick="showSection('alarm')">Alarm</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div id="home" class="section">
+            <div class="hero">
+                <h1>🔥 Welcome to FitLife</h1>
+                <p>Your Smart Fitness, Diet & Running Assistant with Real-Time GPS</p>
+                <button class="btn" onclick="showSection('dashboard')">Get Started</button>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card" onclick="showSection('running')">
+                    <div class="feature-icon">🏃</div>
+                    <h3>GPS Running Tracker</h3>
+                    <p>Live GPS location tracking with real-time distance, pace, and route mapping.</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('bmi')">
+                    <div class="feature-icon">⚖️</div>
+                    <h3>BMI Calculator</h3>
+                    <p>Calculate your Body Mass Index and get personalized health insights.</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('health')">
+                    <div class="feature-icon">🧬</div>
+                    <h3>Health Calculators</h3>
+                    <p>BMR, Body Fat %, Ideal Weight, Water Intake, Calorie Requirements & more!</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('diet')">
+                    <div class="feature-icon">🍎</div>
+                    <h3>Smart Diet Planner</h3>
+                    <p>AI-powered meal suggestions based on your BMI and fitness goals.</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('workouts')">
+                    <div class="feature-icon">🧘</div>
+                    <h3>Workout Library</h3>
+                    <p>Extensive collection of exercises with guides for all fitness levels.</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('motivation')">
+                    <div class="feature-icon">💪</div>
+                    <h3>Daily Motivation</h3>
+                    <p>Inspirational quotes, success stories, and fitness tips to keep you motivated.</p>
+                </div>
+
+                <div class="feature-card" onclick="showSection('alarm')">
+                    <div class="feature-icon">⏰</div>
+                    <h3>Workout Alarm</h3>
+                    <p>Set custom alarms for your workout schedule and never miss a session.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboard" class="section" style="display:none;">
+            <div class="card">
+                <h2>📊 Your Fitness Dashboard</h2>
+                <div class="stat-box">
+                    <div>
+                        <p>Total Workouts</p>
+                        <h3 id="totalWorkouts">0</h3>
+                    </div>
+                    <div style="font-size: 3rem;">🏋️</div>
+                </div>
+                <div class="stat-box" style="background: var(--gradient-2);">
+                    <div>
+                        <p>Calories Burned</p>
+                        <h3 id="totalCalories">0</h3>
+                    </div>
+                    <div style="font-size: 3rem;">🔥</div>
+                </div>
+                <div class="stat-box" style="background: var(--gradient);">
+                    <div>
+                        <p>Current Streak</p>
+                        <h3 id="currentStreak">0 days</h3>
+                    </div>
+                    <div style="font-size: 3rem;">⚡</div>
+                </div>
+                <canvas id="progressChart" style="margin-top: 2rem;"></canvas>
+            </div>
+
+            <div class="card">
+                <h2>🎯 Weekly Progress</h2>
+                <canvas id="weeklyChart"></canvas>
+                <div style="margin-top: 2rem;">
+                    <h3>Today's Goal</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="dailyProgress" style="width: 0%">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="running" class="section" style="display:none;">
+            <div class="card">
+                <h2>🏃 GPS Running Tracker with Live Location</h2>
+                
+                <div id="map"></div>
+                
+                <div class="gps-info">
+                    <p>📍 Current Location: <span id="currentLocation">Waiting for GPS...</span></p>
+                    <p>🧭 Latitude: <span id="latitude">-</span> | Longitude: <span id="longitude">-</span></p>
+                    <p>⚡ GPS Accuracy: <span id="gpsAccuracy">-</span> meters</p>
+                </div>
+                
+                <div class="running-tracker">
+                    <div class="running-display" id="runningTimer">00:00</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 2rem 0;">
+                        <div>
+                            <h4 style="color: #666;">Distance</h4>
+                            <h2 style="color: #1e3c72;" id="runningDistance">0.0 km</h2>
+                        </div>
+                        <div>
+                            <h4 style="color: #666;">Pace</h4>
+                            <h2 style="color: #1e3c72;" id="runningPace">0:00 /km</h2>
+                        </div>
+                        <div>
+                            <h4 style="color: #666;">Calories</h4>
+                            <h2 style="color: #1e3c72;" id="runningCalories">0 kcal</h2>
+                        </div>
+                    </div>
+                    <div class="running-controls">
+                        <button class="btn" onclick="startRunning()">▶️ Start</button>
+                        <button class="btn btn-secondary" onclick="pauseRunning()">⏸️ Pause</button>
+                        <button class="btn" onclick="resetRunning()" style="background: #ef4444;">🔄 Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="bmi" class="section" style="display:none;">
+            <div class="card">
+                <h2>⚖️ BMI Calculator</h2>
+                <div class="input-group">
+                    <label>Height (cm)</label>
+                    <input type="number" id="height" placeholder="Enter height in cm">
+                </div>
+                <div class="input-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" id="weight" placeholder="Enter weight in kg">
+                </div>
+                <button class="btn" onclick="calculateBMI()" style="width: 100%;">Calculate BMI</button>
+                <div id="bmiResult"></div>
+            </div>
+        </div>
+
+        <div id="health" class="section" style="display:none;">
+            <div class="dashboard-section">
+                <div class="card">
+                    <h2>🔥 BMR Calculator</h2>
+                    <p style="color: #666; margin-bottom: 1rem;">Basal Metabolic Rate - Rest mein body ki calorie burn</p>
+                    <div class="input-group">
+                        <label>Age (years)</label>
+                        <input type="number" id="bmrAge" placeholder="Age">
+                    </div>
+                    <div class="input-group">
+                        <label>Gender</label>
+                        <select id="bmrGender">
+                            <option>Male</option>
+                            <option>Female</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="bmrWeight" placeholder="Weight">
+                    </div>
+                    <div class="input-group">
+                        <label>Height (cm)</label>
+                        <input type="number" id="bmrHeight" placeholder="Height">
+                    </div>
+                    <button class="btn" onclick="calculateBMR()" style="width: 100%;">Calculate BMR</button>
+                    <div id="bmrResult"></div>
+                </div>
+
+                <div class="card">
+                    <h2>💧 Water Intake Calculator</h2>
+                    <p style="color: #666; margin-bottom: 1rem;">Roz kitna paani peena chahiye</p>
+                    <div class="input-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="wiWeight" placeholder="Weight">
+                    </div>
+                    <div class="input-group">
+                        <label>Activity Level</label>
+                        <select id="wiActivity">
+                            <option value="30">Low Activity</option>
+                            <option value="35">Moderate Activity</option>
+                            <option value="40">High Activity</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="calculateWaterIntake()" style="width: 100%;">Calculate Water Intake</button>
+                    <div id="wiResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="diet" class="section" style="display:none;">
+            <div class="card">
+                <h2>🍎 Smart Diet Planner</h2>
+                <div class="input-group">
+                    <label>Your BMI</label>
+                    <input type="number" id="dietBMI" placeholder="Enter your BMI" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Fitness Goal</label>
+                    <select id="fitnessGoal">
+                        <option>Weight Loss</option>
+                        <option>Muscle Gain</option>
+                        <option>Maintenance</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="generateDietPlan()" style="width: 100%;">Generate Diet Plan</button>
+                <div id="dietResult" style="margin-top: 2rem;"></div>
+            </div>
+        </div>
+
+        <div id="workouts" class="section" style="display:none;">
+            <div class="card">
+                <h2>🧘 Workout Library</h2>
+                
+                <div style="margin-bottom: 2rem;">
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block; color: #1e3c72;">Filter by Category:</label>
+                    <select id="workoutFilter" onchange="filterWorkouts()" style="padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; width: 100%;">
+                        <option value="all">All Exercises</option>
+                        <option value="strength">Strength Training</option>
+                        <option value="cardio">Cardio</option>
+                        <option value="flexibility">Flexibility</option>
+                        <option value="core">Core</option>
+                        <option value="upper">Upper Body</option>
+                        <option value="lower">Lower Body</option>
+                    </select>
+                </div>
+
+                <div class="workout-library" id="workoutLibrary">
+                    <!-- Strength Training -->
+                    <div class="workout-item" data-category="strength upper">
+                        <img src="https://www.muscletech.in/wp-content/uploads/2025/01/push-up-exercises.webp" alt="Push-ups" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Push-ups</h4>
+                            <p class="workout-category">💪 Strength</p>
+                            <p class="workout-duration">3 sets × 15 reps</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="strength lower">
+                        <img src="https://training.fit/wp-content/uploads/2020/03/kniebeugen-langhantel-800x448.png" alt="Squats" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Squats</h4>
+                            <p class="workout-category">💪 Strength</p>
+                            <p class="workout-duration">4 sets × 12 reps</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="strength core">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgjY7WOmtHcaXTDraElFdZMzEITpcxRMOHsg&s" alt="Plank position" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Plank</h4>
+                            <p class="workout-category">🔥 Core</p>
+                            <p class="workout-duration">3 sets × 60 sec</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="strength upper">
+                        <img src="https://hips.hearstapps.com/hmg-prod/images/mh0418-fit-pul-01-1558551798.jpg" alt="Pull-ups on bar" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Pull-ups</h4>
+                            <p class="workout-category">💪 Strength</p>
+                            <p class="workout-duration">3 sets × 8 reps</p>
+                        </div>
+                    </div>
+
+                    <!-- Cardio -->
+                    <div class="workout-item" data-category="cardio">
+                        <img src="https://hips.hearstapps.com/hmg-prod/images/running-track-1667904802.jpg?crop=0.668xw:1.00xh;0.0714xw,0&resize=640:*" alt="Running" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Running</h4>
+                            <p class="workout-category">🏃 Cardio</p>
+                            <p class="workout-duration">30 minutes</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="cardio">
+                        <img src="https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=600&h=400&fit=crop&auto=format&q=85" alt="Outdoor cycling" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Cycling</h4>
+                            <p class="workout-category">🚴 Cardio</p>
+                            <p class="workout-duration">45 minutes</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="cardio">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsYjmBT634PRPYDBooYXA9wtpxIsR-oiz5gA&s" alt="Jump rope workout" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Jump Rope</h4>
+                            <p class="workout-category">🏃 Cardio</p>
+                            <p class="workout-duration">20 minutes</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="cardio">
+                        <img src="https://www.gofitnessplan.com/images/exercises/mixed/burpees.jpg" alt="Burpees workout" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Burpees</h4>
+                            <p class="workout-category">🔥 Cardio</p>
+                            <p class="workout-duration">3 sets × 15 reps</p>
+                        </div>
+                    </div>
+
+                    <!-- Flexibility -->
+                    <div class="workout-item" data-category="flexibility">
+                        <img src="https://images.unsplash.com/photo-1588286840104-8957b019727f?w=600&h=400&fit=crop&auto=format&q=85" alt="Yoga" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Yoga</h4>
+                            <p class="workout-category">🧘 Flexibility</p>
+                            <p class="workout-duration">30 minutes</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="flexibility">
+                        <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=400&fit=crop&auto=format&q=85" alt="Hamstring stretching" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Stretching</h4>
+                            <p class="workout-category">🧘 Flexibility</p>
+                            <p class="workout-duration">15 minutes</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="flexibility">
+                        <img src="https://hips.hearstapps.com/hmg-prod/images/gettyimages-2192003704-681b7066da68e.jpg?crop=0.6666666666666666xw:1xh;center,top&resize=640:*" alt="Pilates mat workout" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Pilates</h4>
+                            <p class="workout-category">🧘 Flexibility</p>
+                            <p class="workout-duration">35 minutes</p>
+                        </div>
+                    </div>
+
+                    <!-- Core -->
+                    <div class="workout-item" data-category="core">
+                        <img src="https://www.wikihow.com/images/thumb/b/b8/Do-Crunches-Step-4-preview-Version-2.jpg/550px-nowatermark-Do-Crunches-Step-4-preview-Version-2.jpg" alt="Ab crunch exercise" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Crunches</h4>
+                            <p class="workout-category">🔥 Core</p>
+                            <p class="workout-duration">3 sets × 20 reps</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="core">
+                        <img src="https://media1.popsugar-assets.com/files/thumbor/pPENdoOAzUtfrfO4gbcFhZDi4c4=/fit-in/792x792/filters:format_auto():upscale()/2024/01/02/752/n/1922729/11f7997c94f34d8e_PS23_Fitness_Workout_08_Move_05_Russian_Twist.jpg" alt="Russian twists with medicine ball" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Russian Twists</h4>
+                            <p class="workout-category">🔥 Core</p>
+                            <p class="workout-duration">3 sets × 30 reps</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="core">
+                        <img src="https://i0.wp.com/www.muscleandfitness.com/wp-content/uploads/2013/03/Muscular-Man-Working-Out-His-Lower-Abs-With-Lying-Leg-Raises-Exercise.jpg?quality=86&strip=all" alt="Leg raises on mat" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Leg Raises</h4>
+                            <p class="workout-category">🔥 Core</p>
+                            <p class="workout-duration">3 sets × 15 reps</p>
+                        </div>
+                    </div>
+
+                    <!-- Upper Body -->
+                    <div class="workout-item" data-category="strength upper">
+                        <img src="https://images.ctfassets.net/8urtyqugdt2l/4wPk3KafRwgpwIcJzb0VRX/4894054c6182c62c1d850628935a4b0b/desktop-best-chest-exercises.jpg" alt="Bench Press" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Bench Press</h4>
+                            <p class="workout-category">💪 Upper Body</p>
+                            <p class="workout-duration">4 sets × 10 reps</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="strength upper">
+                        <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&h=400&fit=crop&auto=format&q=85" alt="Dumbbell bicep curls" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Dumbbell Curls</h4>
+                            <p class="workout-category">💪 Upper Body</p>
+                            <p class="workout-duration">3 sets × 12 reps</p>
+                        </div>
+                    </div>
+
+                    <!-- Lower Body -->
+                    <div class="workout-item" data-category="strength lower">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzSaO7TaJ3yfHaGVIl2qPMALqRg0f0Y5vUWQ&s" alt="Forward lunges" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Lunges</h4>
+                            <p class="workout-category">🦵 Lower Body</p>
+                            <p class="workout-duration">3 sets × 12 reps</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="strength lower">
+                        <img src="https://www.prowolf.in/cdn/shop/articles/deadlift-qa-get-all-your-questions-answered-here-243332_5bcf250f-95da-467a-ad93-f6b88fdeb24d.jpg?v=1751538833" alt="Barbell deadlift" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Deadlifts</h4>
+                            <p class="workout-category">🦵 Lower Body</p>
+                            <p class="workout-duration">4 sets × 8 reps</p>
+                        </div>
+                    </div>
+
+                    <div class="workout-item" data-category="strength lower">
+                        <img src="https://media.gq.com/photos/5a4fe56aefd792474cf8ce17/16:9/w_2560%2Cc_limit/2018-01_GQ_FITNESS-Ask-a-Trainer-Calfs.jpg" alt="Standing calf raises" class="workout-image">
+                        <div class="workout-content">
+                            <h4>Calf Raises</h4>
+                            <p class="workout-category">🦵 Lower Body</p>
+                            <p class="workout-duration">3 sets × 20 reps</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="motivation" class="section" style="display:none;">
+            <div class="card">
+                <h2>💪 Daily Motivation</h2>
+                <div style="text-align: center; padding: 2rem; background: var(--gradient); border-radius: 15px; color: white; margin-bottom: 2rem;">
+                    <h3 style="font-size: 2rem; margin-bottom: 1rem;" id="motivationalQuote">"The only bad workout is the one that didn't happen."</h3>
+                    <p style="font-size: 1.2rem; opacity: 0.9;" id="quoteAuthor">- Unknown</p>
+                    <button class="btn" onclick="getNewQuote()" style="margin-top: 1rem; background: white; color: #667eea;">🔄 New Quote</button>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: #1e3c72; margin-bottom: 1rem;">🎯 Fitness Tips</h3>
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; border-left: 4px solid #667eea;">
+                            <strong>💧 Hydration:</strong> Drink at least 8-10 glasses of water daily for optimal performance.
+                        </div>
+                        <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; border-left: 4px solid #7c3aed;">
+                            <strong>😴 Rest:</strong> Get 7-8 hours of quality sleep for muscle recovery and growth.
+                        </div>
+                        <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; border-left: 4px solid #10b981;">
+                            <strong>🍎 Nutrition:</strong> Eat protein within 30 minutes post-workout for best results.
+                        </div>
+                        <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                            <strong>🔥 Consistency:</strong> Small daily progress is better than sporadic intense workouts.
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="color: #1e3c72; margin-bottom: 1rem;">🏆 Success Stories from Famous Athletes</h3>
+                    
+                    <div style="background: var(--gradient-2); color: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem;">
+                        <h4 style="margin-bottom: 0.5rem;">🥇 Neeraj Chopra - Olympic Gold Medalist</h4>
+                        <p style="opacity: 0.9;">"Rose from a small village to win Olympic gold in javelin. Started with basic fitness, dedicated years to strength training, and became India's pride!" - Tokyo Olympics 2020</p>
+                    </div>
+                    
+                    <div style="background: var(--gradient-3); color: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem;">
+                        <h4 style="margin-bottom: 0.5rem;">🏋️ Will Smith - Actor & Fitness Icon</h4>
+                        <p style="opacity: 0.9;">"Transformed from 185 to 220 lbs of pure muscle for 'Ali'. Trained 6 hours daily - boxing, lifting, running in snow with combat boots. Bench pressed 365 lbs!" - Hollywood Transformation</p>
+                    </div>
+                    
+                    <div style="background: var(--gradient); color: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem;">
+                        <h4 style="margin-bottom: 0.5rem;">🏅 Deepa Malik - Paralympic Champion</h4>
+                        <p style="opacity: 0.9;">"Overcame disability to become Paralympic medalist. Proved that physical challenges can't stop a determined mind. Age and limitations are just numbers!" - Paralympic Glory</p>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem;">
+                        <h4 style="margin-bottom: 0.5rem;">🏃 Amar Singh Devanda - Ultra Marathon Legend</h4>
+                        <p style="opacity: 0.9;">"Started running in 2016 with ZERO sports background. Won gold at IAU 24-hour Championship covering 272.537 km! Set new Indian record. From beginner to champion!" - Ultra Running Star</p>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem;">
+                        <h4 style="margin-bottom: 0.5rem;">🏏 Virat Kohli - Cricket Fitness Revolution</h4>
+                        <p style="opacity: 0.9;">"Transformed cricket fitness standards in India. Went from chubby youngster to one of the fittest athletes. Changed entire diet, adopted strength training, and became fitness icon inspiring millions!" - Cricket Legend</p>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 15px;">
+                        <h4 style="margin-bottom: 0.5rem;">💪 Russell Okung - NFL Transformation</h4>
+                        <p style="opacity: 0.9;">"Former NFL player at 310 lbs lost 100 pounds post-retirement! Focused on health, overcame injuries, and proved it's never too late to transform your body and life!" - NFL to Fitness Icon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="alarm" class="section" style="display:none;">
+            <div class="card">
+                <h2>⏰ Workout Alarm Clock</h2>
+                
+                <div style="text-align: center; padding: 2rem; background: var(--gradient); border-radius: 15px; color: white; margin-bottom: 2rem;">
+                    <div style="font-size: 4rem; font-weight: bold; margin-bottom: 1rem;" id="currentTime">00:00:00</div>
+                    <p style="font-size: 1.2rem;" id="currentDate">Loading...</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: #1e3c72; margin-bottom: 1rem;">🔔 Set Workout Alarm</h3>
+                    <div class="input-group">
+                        <label>Alarm Time</label>
+                        <input type="time" id="alarmTime" style="font-size: 1.2rem; padding: 1rem;">
+                    </div>
+                    <div class="input-group">
+                        <label>Alarm Label</label>
+                        <input type="text" id="alarmLabel" placeholder="e.g., Morning Workout, Evening Run" value="Workout Time!">
+                    </div>
+                    <div class="input-group">
+                        <label>Alarm Sound</label>
+                        <select id="alarmSound" style="padding: 1rem;">
+                            <option value="beep">🔔 Classic Beep</option>
+                            <option value="energetic">⚡ Energetic</option>
+                            <option value="gentle">🌅 Gentle Wake</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="setAlarm()" style="width: 100%; margin-bottom: 1rem;">✅ Set Alarm</button>
+                </div>
+
+                <div id="alarmList" style="margin-top: 2rem;">
+                    <h3 style="color: #1e3c72; margin-bottom: 1rem;">📋 Active Alarms</h3>
+                    <div id="activeAlarms" style="display: grid; gap: 1rem;">
+                        <p style="color: #666; text-align: center; padding: 2rem;">No alarms set yet</p>
+                    </div>
+                </div>
+
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; margin-top: 2rem;">
+                    <p style="color: #666; font-size: 0.9rem;">💡 <strong>Tip:</strong> Set multiple alarms for different workout times throughout the day!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 📱 Mobile Back Button -->
+<!-- 📱 Mobile Back Button -->
+<button id="mobileBackBtn" class="mobile-back-btn" onclick="goBack()">⬅ Back</button>
+
+<script>
+function goBack() {
+  // Jab back dabaye to home dikhaye
+  document.querySelectorAll('.section').forEach(section => {
+    section.style.display = 'none';
+  });
+  document.getElementById('home').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  // Back button hide kar do (kyunki ab home pe aa gaya)
+  const backBtn = document.getElementById('mobileBackBtn');
+  backBtn.style.display = 'none';
+}
+
+// Auto show / hide back button based on section
+function toggleBackButton(sectionId) {
+  const backBtn = document.getElementById('mobileBackBtn');
+  
+  // Sirf mobile view (<=768px) me dikhana hai aur home par hide karna hai
+  if (window.innerWidth <= 768 && sectionId !== 'home') {
+    backBtn.style.display = 'block';
+  } else {
+    backBtn.style.display = 'none';
+  }
+}
+
+// showSection() me integrate karte hain
+const originalShowSection = window.showSection;
+window.showSection = function(sectionId) {
+  originalShowSection(sectionId);
+  toggleBackButton(sectionId);
+};
+
+// Screen resize hone par bhi check karte rahe
+window.addEventListener('resize', () => {
+  const currentSection = [...document.querySelectorAll('.section')]
+    .find(sec => sec.style.display === 'block');
+  if (currentSection) toggleBackButton(currentSection.id);
+});
+</script>
+
+
+  
+</body>
+</html>
